@@ -340,4 +340,61 @@ test.describe("Visual Comparison Tests", () => {
       await context.close();
     }
   });
+
+  test("Click Apply Now, fill out the form, and submit", async ({ page }) => {
+    // Navigate to the homepage
+    const homePageUrl = "https://live-web-se.pantheonsite.io/";
+    console.log(chalk.blue(`Navigating to the home page: ${homePageUrl}`));
+    await page.goto(homePageUrl, { waitUntil: "domcontentloaded" });
+  
+    // Click on the "Apply Now" button
+    const applyNowSelector = "div.module-buttons a.button.custom";
+    console.log(chalk.blue("Clicking on 'Apply Now' button..."));
+    await page.click(applyNowSelector);
+  
+    // Wait for the form page to load
+    const formPageUrl = "https://live-web-se.pantheonsite.io/apply/";
+    console.log(chalk.blue(`Waiting for navigation to the form page: ${formPageUrl}`));
+    await page.waitForURL(formPageUrl, { timeout: 10000 });
+    console.log(chalk.green("Navigated to the Apply Now form page."));
+  
+    // Fill the form fields
+    console.log(chalk.blue("Filling out the Apply Now form fields..."));
+    await page.selectOption("#input_1_13", { value: "SE-C-DATAANLTCS" }); // Select "Graduate Certificate – Data Analytics"
+    await page.fill("#input_1_2", "Jane");
+    await page.fill("#input_1_3", "Smith");
+    await page.fill("#input_1_4", "janesmith@example.com");
+    await page.fill("#input_1_5", "5559876543");
+    await page.fill("#input_1_6", "54321");
+    await page.selectOption("#input_1_7", { value: "Online" });
+    console.log(chalk.green("Form fields filled successfully."));
+  
+    // Submit the form and wait for navigation to the next page
+    console.log(chalk.blue("Submitting the Apply Now form and waiting for navigation..."));
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: "domcontentloaded" }), // Wait for the next page to load
+      page.click("#gform_submit_button_1"),
+    ]);
+    console.log(chalk.green("Form submitted, and navigated to the confirmation page."));
+  
+    // Wait for the confirmation message to appear
+    console.log(chalk.blue("Waiting for confirmation message on the next page..."));
+    const confirmationSelector = ".elementor-widget-container h1.header2";
+    try {
+      await page.waitForSelector(confirmationSelector, { timeout: 15000 }); // Wait for the confirmation message
+      const confirmationText = await page.textContent(confirmationSelector);
+  
+      // Log the confirmation message to debug potential issues
+      console.log(chalk.blue(`Confirmation message found: "${confirmationText.trim()}"`));
+  
+      if (confirmationText.trim() === "Great! Now, take the next step.") {
+        console.log(chalk.green("Form submitted successfully and confirmation message displayed."));
+      } else {
+        console.log(chalk.red("Confirmation message text did not match expected value."));
+      }
+    } catch (error) {
+      console.error(chalk.red(`Error waiting for confirmation message: ${error.message}`));
+    }
+  });
+  
 });
